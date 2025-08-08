@@ -1,0 +1,1 @@
+(function(){if(location.pathname.endsWith('validador.html')&&localStorage.getItem('winv_auth')!=='ok'){location.href='login.html';}const s=document.getElementById('btnSair');if(s){s.addEventListener('click',()=>{localStorage.removeItem('winv_auth');location.href='login.html';});}})();

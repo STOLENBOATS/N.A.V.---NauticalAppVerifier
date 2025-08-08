@@ -1,0 +1,13 @@
+<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Validação Forense Visual</title><link rel="stylesheet" href="css/styles.css"></head>
+<body><header><img src="img/logo-pm.png" alt="Logótipo Polícia Marítima"><h1>Validação Forense Visual</h1><div style="margin-left:auto;"><a href="validador.html"><button class="primary">Voltar ao Validador</button></a></div></header>
+<div class="container">
+<div class="card"><h2>Exemplos de referência</h2><p class="helper">Imagens meramente exemplificativas. Use como guia visual inicial.</p>
+<div class="row"><div><img src="img/examples/win_true.png" style="width:100%;border:1px solid #e5e7eb;border-radius:12px"></div><div><img src="img/examples/win_suspect.png" style="width:100%;border:1px solid #e5e7eb;border-radius:12px"></div></div>
+<div class="row" style="margin-top:12px;"><div><img src="img/examples/yamaha_plate.png" style="width:100%;border:1px solid #e5e7eb;border-radius:12px"></div><div><img src="img/examples/honda_plate.png" style="width:100%;border:1px solid #e5e7eb;border-radius:12px"></div></div></div>
+<div class="card"><h2>Comparação com sobreposição</h2><div class="tools">
+<div><label for="refSelect">Modelo de Referência</label><select id="refSelect"><option value="img/examples/win_true.png">WIN — Referência</option><option value="img/examples/yamaha_plate.png">Yamaha — Placa</option><option value="img/examples/honda_plate.png">Honda — Placa</option></select></div>
+<div><label for="userPhoto">Fotografia capturada</label><input id="userPhoto" type="file" accept="image/*" capture="environment"></div>
+<div><label for="alpha">Transparência da referência</label><input id="alpha" class="range" type="range" min="0" max="1" step="0.05" value="0.4"></div></div>
+<div style="margin-top:12px;"><canvas id="canvas" width="1000" height="600"></canvas></div></div></div>
+<div class="footer">Polícia Marítima - U.C.I.C. - Vs. 1.0</div><script src="js/forense.js"></script></body></html>
