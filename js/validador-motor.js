@@ -1,1 +1,137 @@
-(function(){const ms=document.getElementById('marca'),bf=document.getElementById('brandFields');const st=document.getElementById('motorStatus'),panel=document.getElementById('motorInterpretacao'),kv=document.getElementById('motorKV');const tpl={yamaha:`<div class="row"><div><label>Modelo (ex.: F350NSA)<br><small class="muted">EN: Model code</small></label><input id="y_modelo" type="text" placeholder="F350NSA"></div><div><label>Código (ex.: 6ML)<br><small class="muted">EN: Code</small></label><input id="y_codigo" type="text" placeholder="6ML"></div></div><div class="row"><div><label>Letra (ex.: N)<br><small class="muted">EN: Letter</small></label><input id="y_letra" type="text" placeholder="N"></div><div><label>Nº Série (ex.: 1005843)<br><small class="muted">EN: Serial number</small></label><input id="y_sn" type="text" placeholder="1005843"></div></div>`,honda:`<div class="row"><div><label>Modelo<br><small class="muted">EN: Model</small></label><input id="h_modelo" type="text" placeholder="BF150A"></div><div><label>Prefixo<br><small class="muted">EN: Prefix</small></label><input id="h_prefixo" type="text" placeholder="BBAY"></div></div><div class="row"><div><label>Nº Série<br><small class="muted">EN: Serial number</small></label><input id="h_sn" type="text" placeholder="1234567"></div></div>`};function onChange(){const v=ms.value;panel.classList.add('hidden');kv.innerHTML='';st.textContent='';bf.innerHTML='';if(!v)return;const w=document.createElement('div');w.className='card';w.innerHTML=tpl[v];bf.appendChild(w);}ms.addEventListener('change',onChange);function setS(ok,msg){st.className='helper status '+(ok?'ok':'bad');st.textContent=msg;}function ts(){const d=new Date();return `${d.getFullYear()}-${('0'+(d.getMonth()+1)).slice(-2)}-${('0'+d.getDate()).slice(-2)} ${('0'+d.getHours()).slice(-2)}:${('0'+d.getMinutes()).slice(-2)}`;}function vY(d){if(!d.modelo)return{ok:false,motivo:'Modelo em falta.'};if(!d.codigo)return{ok:false,motivo:'Código em falta.'};if(!d.letra||!/^[A-Z]$/i.test(d.letra))return{ok:false,motivo:'Letra inválida.'};if(!d.sn||!/^\d{5,8}$/.test(d.sn))return{ok:false,motivo:'Nº série inválido.'};return{ok:true,kv:[['Modelo','Model',d.modelo],['Código','Code',d.codigo],['Letra','Letter',d.letra.toUpperCase()],['Nº Série','Serial',d.sn]]};}function vH(d){if(!d.modelo)return{ok:false,motivo:'Modelo em falta.'};if(!d.prefixo)return{ok:false,motivo:'Prefixo em falta.'};if(!d.sn||!/^\d{5,8}$/.test(d.sn))return{ok:false,motivo:'Nº série inválido.'};return{ok:true,kv:[['Modelo','Model',d.modelo],['Prefixo','Prefix',d.prefixo],['Nº Série','Serial',d.sn]]};}function render(items){kv.innerHTML=items.map(([pt,en,val])=>`<dt>${pt} / ${en}</dt><dd>${val}</dd>`).join('');}document.getElementById('btnValidarMotor').addEventListener('click',()=>{const v=ms.value;if(!v){setS(false,'Selecione uma marca. EN: Select a brand.');panel.classList.add('hidden');kv.innerHTML='';return;}let res=null;if(v==='yamaha'){res=vY({modelo:(document.getElementById('y_modelo')||{}).value||'',codigo:(document.getElementById('y_codigo')||{}).value||'',letra:(document.getElementById('y_letra')||{}).value||'',sn:(document.getElementById('y_sn')||{}).value||''});}if(v==='honda'){res=vH({modelo:(document.getElementById('h_modelo')||{}).value||'',prefixo:(document.getElementById('h_prefixo')||{}).value||'',sn:(document.getElementById('h_sn')||{}).value||''});}if(!res.ok){setS(false,'Inválido: '+res.motivo+' EN: Invalid.');panel.classList.add('hidden');kv.innerHTML='';}else{setS(true,'Válido. EN: Valid.');render(res.kv);panel.classList.remove('hidden');}setTimeout(()=>{const ok=st.classList.contains('ok');const dts=ts();const brand=v;let model='',sn='';if(brand==='yamaha'){model=(document.getElementById('y_modelo')||{}).value||'';sn=(document.getElementById('y_sn')||{}).value||'';}if(brand==='honda'){model=(document.getElementById('h_modelo')||{}).value||'';sn=(document.getElementById('h_sn')||{}).value||'';}const photo=sessionStorage.getItem('motor_last_photo')||'';const arr=JSON.parse(localStorage.getItem('hist_motor')||'[]');arr.unshift({dt:dts,brand,model,sn,result:ok?'Válido':'Inválido',just:st.textContent||'',photo});localStorage.setItem('hist_motor',JSON.stringify(arr.slice(0,200)));},10);});})();
+(function(){
+  const brandSel = document.getElementById('brand');
+  const serial = document.getElementById('serial');
+  const brandFields = document.getElementById('brandFields');
+  const btnValidate = document.getElementById('btnValidarMotor');
+  const btnClear = document.getElementById('btnLimparMotor');
+  const status = document.getElementById('motorStatus');
+  const interpret = document.getElementById('motorInterpret');
+  const file = document.getElementById('motorPhoto');
+
+  function show(el){ el.classList.remove('hidden'); }
+  function hide(el){ el.classList.add('hidden'); }
+  function setStatus(ok, text){
+    status.textContent = text;
+    status.className = 'notice ' + (ok ? 'success' : 'error');
+    show(status);
+  }
+
+  function renderBrandFields(brand){
+    brandFields.innerHTML='';
+    if(brand==='Yamaha'){
+      brandFields.innerHTML = `
+        <div>
+          <label>Código de Modelo <span class="lang">Model code</span></label>
+          <input id="yamModel" placeholder="Ex.: F350NSA">
+        </div>
+        <div>
+          <label>Código Interno <span class="lang">Internal code</span></label>
+          <input id="yamCode" placeholder="Ex.: 6ML">
+        </div>
+      `;
+    } else if(brand==='Honda'){
+      brandFields.innerHTML = `
+        <div>
+          <label>Modelo <span class="lang">Model</span></label>
+          <input id="honModel" placeholder="Ex.: BF150AK3">
+        </div>
+        <div>
+          <label>Prefixo <span class="lang">Prefix</span></label>
+          <input id="honPrefix" placeholder="Ex.: BAZS">
+        </div>
+      `;
+    }
+  }
+
+  brandSel.addEventListener('change', e=>{
+    renderBrandFields(brandSel.value);
+  });
+
+  function validateYamaha(sn, model, code){
+    // Very light heuristics: known pattern like 6ML-XXXXXXX and model letters/digits
+    const okSerial = /^[A-Z0-9]{2,4}-?\d{5,8}$/.test(sn.toUpperCase());
+    const okModel = /^[A-Z0-9]{3,10}$/.test((model||'').toUpperCase());
+    const okCode = /^[A-Z0-9]{2,4}$/.test((code||'').toUpperCase());
+    let reason = [];
+    if(!okSerial) reason.push('Número de série Yamaha fora do padrão expectável');
+    if(!okModel) reason.push('Código de modelo Yamaha não reconhecido');
+    if(!okCode) reason.push('Código interno Yamaha inválido');
+    const ok = okSerial && okModel && okCode;
+    return {ok, reason: reason.join('; ') || 'Estrutura coerente Yamaha'};
+  }
+
+  function validateHonda(sn, model, prefix){
+    const okSerial = /^[A-Z0-9-]{6,14}$/.test(sn.toUpperCase());
+    const okModel = /^[A-Z0-9]{3,12}$/.test((model||'').toUpperCase());
+    const okPrefix = /^[A-Z0-9]{2,6}$/.test((prefix||'').toUpperCase());
+    let reason = [];
+    if(!okSerial) reason.push('Número de série Honda fora do padrão expectável');
+    if(!okModel) reason.push('Modelo Honda inválido');
+    if(!okPrefix) reason.push('Prefixo Honda inválido');
+    const ok = okSerial && okModel && okPrefix;
+    return {ok, reason: reason.join('; ') || 'Estrutura coerente Honda'};
+  }
+
+  function renderInterpret(obj){
+    interpret.innerHTML = `
+      <h3>Interpretação / <span class="lang">Interpretation</span></h3>
+      <div class="kv">
+        <div><strong>Marca</strong><div class="small">Brand</div></div>
+        <div>${obj.brand}</div>
+
+        <div><strong>Número</strong><div class="small">Serial</div></div>
+        <div>${obj.serial}</div>
+
+        ${obj.model?`<div><strong>Modelo</strong><div class="small">Model</div></div><div>${obj.model}</div>`:''}
+        ${obj.extra?`<div><strong>Extra</strong><div class="small">Extra</div></div><div>${obj.extra}</div>`:''}
+      </div>
+    `;
+    show(interpret);
+  }
+
+  btnValidate.addEventListener('click', async ()=>{
+    hide(interpret);
+    const brand = brandSel.value;
+    const sn = (serial.value||'').trim();
+    const photo = await readFileAsDataURL(file.files[0]);
+
+    if(!brand){ setStatus(false,'Selecione a marca / Select brand'); return; }
+    if(!sn){ setStatus(false,'Indique o número de série'); return; }
+
+    let verdict = {ok:false, reason:'Em falta'};
+    let model='', extra='';
+
+    if(brand==='Yamaha'){
+      model = (document.getElementById('yamModel')?.value||'').trim();
+      extra = (document.getElementById('yamCode')?.value||'').trim();
+      verdict = validateYamaha(sn, model, extra);
+    } else if(brand==='Honda'){
+      model = (document.getElementById('honModel')?.value||'').trim();
+      extra = (document.getElementById('honPrefix')?.value||'').trim();
+      verdict = validateHonda(sn, model, extra);
+    }
+
+    if(!verdict.ok){
+      setStatus(false, 'INVÁLIDO: ' + verdict.reason);
+    } else {
+      setStatus(true, 'VÁLIDO');
+      renderInterpret({brand, serial: sn, model, extra});
+    }
+
+    const hist = JSON.parse(localStorage.getItem('motorHistory')||'[]');
+    hist.unshift({
+      date: nowStr(),
+      brand,
+      serial: sn,
+      result: verdict.ok ? 'Válido' : 'Inválido',
+      reason: verdict.reason,
+      photo
+    });
+    localStorage.setItem('motorHistory', JSON.stringify(hist));
+  });
+
+  btnClear.addEventListener('click', ()=>{
+    brandSel.value=''; serial.value=''; brandFields.innerHTML=''; hide(status); hide(interpret); file.value='';
+  });
+
+})();

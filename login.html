@@ -1,8 +1,36 @@
-<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Login — WIN Validator</title><link rel="stylesheet" href="css/styles.css"></head>
-<body><header><img src="img/logo-pm.png" alt="Logótipo Polícia Marítima"><h1>WIN Validator — Acesso</h1></header>
-<div class="container"><div class="card"><h2>Autenticação</h2><p class="helper">Utilize as credenciais temporárias para entrar.</p>
-<div class="row"><div><label for="user">Utilizador<br><small class="muted">EN: Username</small></label><input id="user" type="text" placeholder="admin"></div>
-<div><label for="pass">Palavra-passe<br><small class="muted">EN: Password</small></label><input id="pass" type="text" placeholder="Admin2025"></div></div>
-<br><button class="primary" id="btnLogin">Entrar / Login</button><p id="loginMsg" class="helper"></p></div></div>
-<div class="footer">Polícia Marítima - U.C.I.C. - Vs. 1.0</div><script src="js/login.js"></script></body></html>
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login • WIN Validator</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>
+    <img src="assets/logo-pm.svg" alt="Polícia Marítima">
+    <h1>WIN Validator • Login</h1>
+  </header>
+  <main>
+    <div class="card" style="max-width:520px;margin:2rem auto">
+      <h2>Autenticação / <span class="lang">Authentication</span></h2>
+      <p class="caption">Credenciais de teste: <code class="inline">admin</code> / <code class="inline">Admin2025</code></p>
+      <div class="grid">
+        <div>
+          <label>Utilizador <span class="lang">Username</span></label>
+          <input id="username" autocomplete="username" placeholder="admin">
+        </div>
+        <div>
+          <label>Password</label>
+          <input id="password" type="password" autocomplete="current-password" placeholder="Admin2025">
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button id="loginBtn" class="btn">Entrar / <span class="lang">Sign in</span></button>
+      </div>
+      <div id="loginMsg" class="caption"></div>
+    </div>
+  </main>
+  <script src="js/login.js"></script>
+</body>
+</html>

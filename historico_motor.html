@@ -1,7 +1,52 @@
-<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Histórico — Motores</title><link rel="stylesheet" href="css/styles.css"></head>
-<body><header><img src="img/logo-pm.png" alt="Logótipo Polícia Marítima"><h1>Histórico — Motores</h1>
-<div style="margin-left:auto; display:flex; gap:8px;"><button id="btnExportCSV">Exportar CSV</button><a href="validador.html"><button class="primary">Voltar ao Validador</button></a></div></header>
-<div class="container"><div class="card"><p class="helper">Registos gravados localmente no navegador. EN: Records stored locally.</p>
-<table class="table" id="tblMotor"><thead><tr><th>Data/Hora</th><th>Marca</th><th>Modelo/Ref</th><th>Nº Série</th><th>Resultado</th><th>Justificação</th><th>Foto</th></tr></thead><tbody></tbody></table>
-</div></div><div class="footer">Polícia Marítima - U.C.I.C. - Vs. 1.0</div><script src="js/historico-motor.js"></script></body></html>
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Histórico Motor</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>
+    <img src="assets/logo-pm.svg" alt="Polícia Marítima">
+    <h1>Histórico • Motores</h1>
+  </header>
+  <main>
+    <div class="row">
+      <a class="tag" href="validador.html">◀ Voltar ao Validador</a>
+      <button id="exportMotorCsv" class="btn secondary">Exportar CSV</button>
+    </div>
+    <div class="card">
+      <table id="motorTable">
+        <thead>
+          <tr>
+            <th>Data</th><th>Marca</th><th>Número</th><th>Resultado</th><th>Justificação</th><th>Foto</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+  <script src="js/utils.js"></script>
+  <script>
+    const tbody = document.querySelector('#motorTable tbody');
+    const rows = JSON.parse(localStorage.getItem('motorHistory')||'[]');
+    for(const r of rows){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r.date}</td>
+                      <td>${r.brand||''}</td>
+                      <td>${r.serial||''}</td>
+                      <td>${r.result}</td>
+                      <td>${r.reason||''}</td>
+                      <td>${r.photo?'<img class="preview" src="'+r.photo+'">':''}</td>`;
+      tbody.appendChild(tr);
+    }
+    document.getElementById('exportMotorCsv').addEventListener('click',()=>{
+      const data = [['Data','Marca','Número','Resultado','Justificação','Foto']].concat(
+        rows.map(r=>[r.date,r.brand||'',r.serial||'',r.result,r.reason||'',r.photo||''])
+      );
+      downloadCSV('historico_motor.csv', data);
+    });
+  </script>
+</body>
+</html>

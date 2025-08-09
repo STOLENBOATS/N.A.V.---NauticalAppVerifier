@@ -1,26 +1,76 @@
-<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Validador — WIN & Motores</title><link rel="stylesheet" href="css/styles.css"></head>
-<body><header><img src="img/logo-pm.png" alt="Logótipo Polícia Marítima"><h1>WIN Validator — Validador</h1><div style="margin-left:auto;"><button id="btnSair">Sair / Logout</button></div></header>
-<div class="container">
-  <div class="card">
-    <h2>Validação WIN (HIN)</h2><p class="helper">Introduza o número WIN/HIN sem espaços. EN: Enter WIN/HIN without spaces.</p>
-    <div class="row"><div><label for="winInput">WIN / HIN<br><small class="muted">EN: Hull Identification Number</small></label><input id="winInput" type="text" placeholder="Ex.: FR-CNBZA135A612"></div>
-    <div><label>&nbsp;</label><button id="btnValidarWIN" class="primary">Validar / Validate</button></div></div>
-    <div id="winStatus" class="helper" style="margin-top:10px;"></div>
-    <div id="winInterpretacao" class="card hidden" style="margin-top:12px;"><h3>Interpretação / Interpretation</h3><table class="table" id="winTable"></table></div>
-    <div style="margin-top:8px;display:flex;gap:8px;"><a href="historico_win.html"><button>Ver Histórico WIN</button></a><a href="visual_forense.html"><button>Validação Forense Visual</button></a></div>
-  </div>
-  <div class="card">
-    <h2>Validação de Motores</h2>
-    <div class="row"><div><label for="marca">Marca<br><small class="muted">EN: Brand</small></label>
-      <select id="marca"><option value="">— Selecionar — / — Select —</option><option value="yamaha">Yamaha</option><option value="honda">Honda</option></select></div>
-      <div id="brandFields"></div></div>
-    <div class="row" style="margin-top:8px;"><div><label for="fotoMotor">Adicionar Foto (câmara/galeria)<br><small class="muted">EN: Add photo — opens camera on mobile</small></label><input id="fotoMotor" type="file" accept="image/*" capture="environment"></div></div>
-    <br><button id="btnValidarMotor" class="primary">Validar / Validate</button>
-    <div id="motorStatus" class="helper" style="margin-top:10px;"></div>
-    <div id="motorInterpretacao" class="card hidden" style="margin-top:12px;"><h3>Interpretação / Interpretation</h3><dl class="kv" id="motorKV"></dl></div>
-    <div style="margin-top:8px;display:flex;gap:8px;"><a href="historico_motor.html"><button>Ver Histórico Motores</button></a></div>
-  </div>
-</div>
-<div class="footer">Polícia Marítima - U.C.I.C. - Vs. 1.0</div>
-<script src="js/guard.js"></script><script src="js/validador-win.js"></script><script src="js/validador-motor.js"></script><script src="js/photo.js"></script></body></html>
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Validador • WIN & Motor</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>
+    <img src="assets/logo-pm.svg" alt="Polícia Marítima">
+    <h1>WIN Validator • Validador</h1>
+  </header>
+  <main>
+    <div class="row">
+      <a class="tag" href="historico_win.html">Histórico WIN</a>
+      <a class="tag" href="historico_motor.html">Histórico Motor</a>
+      <span class="tag" id="logout">Terminar sessão</span>
+    </div>
+
+    <div class="card">
+      <h2>Validação WIN / <span class="lang">Hull/WIN Validation</span></h2>
+      <div class="grid grid-2">
+        <div>
+          <label>WIN (14 ou 16) <span class="lang">WIN (14 or 16)</span></label>
+          <input id="winInput" placeholder="FR-CNBZA135A612 (aceita hífen)">
+          <div class="caption">Regras: UE 14 | EUA 14/16, mês em letra (exceto I,O,Q), ano em dígito, modelo 2 dígitos.</div>
+        </div>
+        <div>
+          <label>Foto (opcional) <span class="lang">Photo (optional)</span></label>
+          <input id="winPhoto" type="file" accept="image/*">
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button id="btnValidarWIN" class="btn">Validar / <span class="lang">Validate</span></button>
+        <button id="btnLimparWIN" class="btn secondary">Limpar</button>
+      </div>
+      <div id="winStatus" class="notice hidden"></div>
+      <div id="winInterpret" class="card hidden"></div>
+    </div>
+
+    <div class="card">
+      <h2>Validação Motor / <span class="lang">Engine Validation</span></h2>
+      <div class="grid grid-2">
+        <div>
+          <label>Marca <span class="lang">Brand</span></label>
+          <select id="brand">
+            <option value="">Selecionar / Select</option>
+            <option value="Yamaha">Yamaha</option>
+            <option value="Honda">Honda</option>
+          </select>
+        </div>
+        <div>
+          <label>Número de Série <span class="lang">Serial Number</span></label>
+          <input id="serial" placeholder="Ex.: 6ML-1005843">
+        </div>
+        <div id="brandFields" class="grid grid-2"></div>
+        <div>
+          <label>Foto (opcional) <span class="lang">Photo (optional)</span></label>
+          <input id="motorPhoto" type="file" accept="image/*">
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button id="btnValidarMotor" class="btn">Validar / <span class="lang">Validate</span></button>
+        <button id="btnLimparMotor" class="btn secondary">Limpar</button>
+      </div>
+      <div id="motorStatus" class="notice hidden"></div>
+      <div id="motorInterpret" class="card hidden"></div>
+    </div>
+
+  </main>
+  <script src="js/utils.js"></script>
+  <script src="js/validador-win.js"></script>
+  <script src="js/validador-motor.js"></script>
+</body>
+</html>

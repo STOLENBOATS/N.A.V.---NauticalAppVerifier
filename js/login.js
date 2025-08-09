@@ -1,1 +1,17 @@
-(function(){const b=document.getElementById('btnLogin'),u=document.getElementById('user'),p=document.getElementById('pass'),m=document.getElementById('loginMsg');b.addEventListener('click',()=>{const U=(u.value||'').trim(),P=(p.value||'').trim();if(U==='admin'&&P==='Admin2025'){localStorage.setItem('winv_auth','ok');location.href='validador.html';}else{m.textContent='Credenciais inválidas. EN: Invalid credentials.';}});})();
+(function(){
+  const btn = document.getElementById('loginBtn');
+  const u = document.getElementById('username');
+  const p = document.getElementById('password');
+  const msg = document.getElementById('loginMsg');
+  btn.addEventListener('click', () => {
+    const U = (u.value||'').trim();
+    const P = (p.value||'').trim();
+    if(U==='admin' && P==='Admin2025'){
+      localStorage.setItem('sessionUser','admin');
+      window.location.href = 'validador.html';
+    } else {
+      msg.textContent = 'Credenciais inválidas / Invalid credentials';
+      msg.className = 'caption error';
+    }
+  });
+})();
