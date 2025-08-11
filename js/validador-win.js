@@ -1,153 +1,79 @@
-(function(){
-  if(!document.currentScript){ /* script running */ }
-
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('winForm');
   const input = document.getElementById('winInput');
-  const btnValidate = document.getElementById('btnValidarWIN');
-  const btnClear = document.getElementById('btnLimparWIN');
-  const status = document.getElementById('winStatus');
-  const interpret = document.getElementById('winInterpret');
-  const file = document.getElementById('winPhoto');
+  const out = document.getElementById('winResultado');
+  const interp = document.getElementById('winInterpretacao');
 
-  function show(el){ el.classList.remove('hidden'); }
-  function hide(el){ el.classList.add('hidden'); }
-  function setStatus(ok, text){
-    status.textContent = text;
-    status.className = 'notice ' + (ok ? 'success' : 'error');
-    show(status);
-  }
+  if(!form || !input || !out || !interp) return;
 
-  function letterIsValidMonth(ch){
-    const c = (ch||'').toUpperCase();
-    if(!c) return false;
-    if(['I','O','Q'].includes(c)) return false;
-    return /[A-Z]/.test(c);
-  }
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const rawOriginal = (input.value || '').toUpperCase().trim();
+    const raw = rawOriginal
+      .toUpperCase()
+      .replace(/\s+/g,'')
+      .replace(/-/g,'')
+      .trim();
 
-  function parseWIN(raw){
-    let win = (raw||'').toUpperCase().trim();
-    win = win.replace(/\s+/g,'');
-    // Accept optional hyphen between positions 2 and 3
-    win = win.replace(/^([A-Z]{2})-?/, '$1'); // if hyphen after 2 letters, drop it for internal logic
+    if(!raw){ out.textContent = 'Introduza um WIN.'; return; }
 
-    const len = win.length;
-    if(len!==14 && len!==16){
-      return {ok:false, reason:'Tamanho inválido (esperado 14 ou 16).', data:null};
-    }
+    const res = validarWINBase(raw);
+    res.win = rawOriginal;
+    renderResultado(res);
+    guardarHistoricoWIN(res);
+  });
 
-    // Common head
-    const country = win.slice(0,2);
-    const maker = win.slice(2,5);
-    // Basic alpha checks
-    if(!/^[A-Z]{2}$/.test(country)) return {ok:false, reason:'País inválido (devem ser 2 letras).', data:null};
-    if(!/^[A-Z]{3}$/.test(maker)) return {ok:false, reason:'Fabricante inválido (devem ser 3 letras).', data:null};
+  function validarWINBase(win){
+    const EU14 = /^[A-Z]{2}[A-Z]{3}[A-Z0-9]{5}[A-HJ-NPR-TWXYZ][0-9][0-9]{2}$/;
+    const US14_16 = /^[A-Z]{2}[A-Z]{3}[A-Z0-9]{7}[A-HJ-NPR-TWXYZ][0-9][0-9]{2}([0-9]{2})?$/;
+    const isEU = EU14.test(win);
+    const isUS = US14_16.test(win);
+    const valido = isEU || isUS;
 
-    if(len===14){
-      // EU or US-14 form
-      const series = win.slice(5,10); // free
-      const month = win.slice(10,11);
-      const yearProd = win.slice(11,12);
-      const modelYY = win.slice(12,14);
-      if(!letterIsValidMonth(month)) return {ok:false, reason:'Mês inválido (letra, exceto I,O,Q).', data:null};
-      if(!/^[0-9]$/.test(yearProd)) return {ok:false, reason:'Ano de produção inválido (1 dígito).', data:null};
-      if(!/^[0-9]{2}$/.test(modelYY)) return {ok:false, reason:'Ano de modelo inválido (2 dígitos).', data:null};
+    const pais = win.slice(0,2);
+    const fab  = win.slice(2,5);
+    const serie = isEU ? win.slice(5,10) : win.slice(5,12);
+    const mes = isEU ? win[10] : win[12];
+    const anoProd = isEU ? win[11] : win[13];
+    const anoMod  = isEU ? win.slice(12,14) : (win.length>=16 ? win.slice(14,16) : '');
 
-      return {ok:true, type:'EU/US14', data:{country,maker,series,month,yearProd,modelYY,raw:win}};
-    } else {
-      // US-16
-      const series = win.slice(5,12);
-      const month = win.slice(12,13);
-      const yearProd = win.slice(13,14);
-      const modelYY = win.slice(14,16);
-      if(!letterIsValidMonth(month)) return {ok:false, reason:'Mês inválido (letra, exceto I,O,Q).', data:null};
-      if(!/^[0-9]$/.test(yearProd)) return {ok:false, reason:'Ano de produção inválido (1 dígito).', data:null};
-      if(!/^[0-9]{2}$/.test(modelYY)) return {ok:false, reason:'Ano de modelo inválido (2 dígitos).', data:null};
-
-      return {ok:true, type:'US16', data:{country,maker,series,month,yearProd,modelYY,raw:win}};
-    }
-  }
-
-  function yearHint(digit){ // permit 1900s or 2000s
-    const d = Number(digit);
-    const y2000 = 2000 + d;
-    const y1900 = 1900 + d;
-    return `${y1900} ou ${y2000}`;
-  }
-
-  function modelYearHint(yy){
-    const n = Number(yy);
-    const y1900 = 1900 + n;
-    const y2000 = 2000 + n;
-    return `${y1900} ou ${y2000}`;
-  }
-
-  function renderInterpret(d){
-    const countryMap = {
-      'FR':'França','PT':'Portugal','ES':'Espanha','IT':'Itália','DE':'Alemanha','GB':'Reino Unido','NL':'Países Baixos','SE':'Suécia','FI':'Finlândia','NO':'Noruega','US':'Estados Unidos','CA':'Canadá'
+    return {
+      win, valido,
+      partes:{ pais, fab, serie, mes, anoProd, anoMod },
+      motivo: valido ? 'Estrutura válida (verificação base).' : 'Falha no padrão estrutural.'
     };
-    const countryName = countryMap[d.country] || '—';
-
-    const html = `
-      <h3>Interpretação / <span class="lang">Interpretation</span></h3>
-      <div class="kv">
-        <div><strong>País</strong><div class="small">Country</div></div>
-        <div>${d.country} — ${countryName}</div>
-
-        <div><strong>Fabricante</strong><div class="small">Manufacturer</div></div>
-        <div>${d.maker}</div>
-
-        <div><strong>Série</strong><div class="small">Series</div></div>
-        <div>${d.series}</div>
-
-        <div><strong>Mês</strong><div class="small">Month</div></div>
-        <div>${d.month}</div>
-
-        <div><strong>Ano produção</strong><div class="small">Production year</div></div>
-        <div>${d.yearProd} — ${yearHint(d.yearProd)}</div>
-
-        <div><strong>Ano modelo</strong><div class="small">Model year</div></div>
-        <div>${d.modelYY} — ${modelYearHint(d.modelYY)}</div>
-      </div>
-    `;
-    interpret.innerHTML = html;
-    show(interpret);
   }
 
-  btnValidate.addEventListener('click', async ()=>{
-    hide(interpret);
-    const raw = input.value;
-    const parsed = parseWIN(raw);
-    const photo = await readFileAsDataURL(file.files[0]);
+  function renderResultado(res){
+    const {valido, motivo, partes} = res;
+    out.innerHTML = `<strong>${valido ? 'WIN VÁLIDO' : 'WIN INVÁLIDO'}</strong> — ${motivo}`;
+    interp.innerHTML = `
+      <table class="interp">
+        <thead><tr><th>Campo</th><th>Valor</th><th>Interpretação</th></tr></thead>
+        <tbody>
+          <tr><td>País</td><td>${partes.pais}</td><td>País de fabrico (ex.: FR = França)</td></tr>
+          <tr><td>Fabricante</td><td>${partes.fab}</td><td>Construtor (ex.: CNB)</td></tr>
+          <tr><td>Série</td><td>${partes.serie}</td><td>Número de série/registo</td></tr>
+          <tr><td>Mês produção</td><td>${partes.mes}</td><td>Letra mês (A=Jan; B=Fev; …; sem I,O,Q)</td></tr>
+          <tr><td>Ano produção</td><td>${partes.anoProd}</td><td>Último dígito do ano</td></tr>
+          <tr><td>Ano modelo</td><td>${partes.anoMod}</td><td>Dois dígitos (19xx/20xx)</td></tr>
+        </tbody>
+      </table>
+    `;
+  }
 
-    if(!parsed.ok){
-      setStatus(false, 'INVÁLIDO: ' + parsed.reason);
-      // history
-      const item = {
-        date: nowStr(), win: raw, result: 'Inválido', reason: parsed.reason, photo
-      };
-      const hist = JSON.parse(localStorage.getItem('winHistory')||'[]');
-      hist.unshift(item);
-      localStorage.setItem('winHistory', JSON.stringify(hist));
-      return;
-    }
-
-    setStatus(true, 'VÁLIDO ('+ parsed.type +')');
-    renderInterpret(parsed.data);
-
-    const reason = 'Estrutura conforme ('+parsed.type+')';
-    const hist = JSON.parse(localStorage.getItem('winHistory')||'[]');
-    hist.unshift({
-      date: nowStr(),
-      win: raw,
-      result: 'Válido',
-      reason,
-      photo
-    });
-    localStorage.setItem('winHistory', JSON.stringify(hist));
-  });
-
-  btnClear.addEventListener('click', ()=>{
-    input.value = '';
-    file.value = '';
-    hide(status); hide(interpret);
-  });
-})();
+  function guardarHistoricoWIN(res){
+    try{
+      const key = 'historico_win';
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      arr.unshift({
+        ts: new Date().toISOString(),
+        win: res.win,
+        resultado: res.valido ? 'Válido' : 'Inválido',
+        motivo: res.motivo,
+        foto: null
+      });
+      localStorage.setItem(key, JSON.stringify(arr.slice(0,500)));
+    }catch(e){ console.warn('Histórico WIN falhou:', e); }
+  }
+});

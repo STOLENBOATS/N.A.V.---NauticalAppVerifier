@@ -1,36 +1,44 @@
 <!doctype html>
 <html lang="pt">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NAV • Login • WIN Validator</title>
-  <link rel="stylesheet" href="css/styles.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/styles.css">
+<title>NAV — WIN Validator</title>
 </head>
 <body>
-  <header>
-    <img src="assets/logo-pm.svg" alt="Polícia Marítima">
-    <h1>WIN Validator • Login</h1>
-  </header>
-  <main>
-    <div class="card" style="max-width:520px;margin:2rem auto">
-      <h2>Autenticação / <span class="lang">Authentication</span></h2>
-      <p class="caption">Credenciais de teste: <code class="inline">admin</code> / <code class="inline">Admin2025</code></p>
-      <div class="grid">
-        <div>
-          <label>Utilizador <span class="lang">Username</span></label>
-          <input id="username" autocomplete="username" placeholder="admin">
-        </div>
-        <div>
-          <label>Password</label>
-          <input id="password" type="password" autocomplete="current-password" placeholder="Admin2025">
-        </div>
-      </div>
-      <div class="footer-actions">
-        <button id="loginBtn" class="btn">Entrar / <span class="lang">Sign in</span></button>
-      </div>
-      <div id="loginMsg" class="caption"></div>
-    </div>
-  </main>
-  <script src="js/login.js"></script>
+
+<script src="js/config.js" defer></script>
+<script src="js/app.js" defer></script>
+<header class="app-header">
+  <img src="img/logo-pm.png" alt="Polícia Marítima" class="pm-logo" />
+  <div class="brand">
+    <div class="brand-title">N.A.V. — NAUTICAL APPLICATION VERIFIER</div>
+    <div class="brand-subtitle">Polícia Marítima</div>
+  </div>
+</header>
+<footer class="app-footer">
+  <div id="appVersion"></div>
+  <div class="footer-right">© Polícia Marítima</div>
+</footer>
+<script src="js/config.js" defer></script>
+<script src="js/app.js" defer></script>
+<script src="js/utils.js" defer></script>
+
+<main class="container">
+  <section class="card">
+    <h2>Iniciar sessão</h2>
+    <form id="loginForm" class="form-grid">
+      <label for="user"><strong>Utilizador</strong></label>
+      <input id="user" name="user" type="text" autocomplete="username" required>
+      <label for="pass"><strong>Palavra-passe</strong></label>
+      <input id="pass" name="pass" type="password" autocomplete="current-password" required>
+      <button type="submit" class="btn primary">Entrar</button>
+    </form>
+    <p class="muted">Dica: admin / Admin2025</p>
+  </section>
+</main>
+<script src="js/login.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/app.js" defer></script>
 </body>
 </html>

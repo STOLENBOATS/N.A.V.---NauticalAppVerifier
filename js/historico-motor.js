@@ -1,1 +1,24 @@
-(function(){const tb=document.querySelector('#tblMotor tbody');const d=JSON.parse(localStorage.getItem('hist_motor')||'[]');if(!d.length){tb.innerHTML='<tr><td colspan="7" class="helper">Sem registos. EN: No records.</td></tr>';}else{tb.innerHTML=d.map((r,i)=>{const img=r.photo?`<img class="thumb" src="${r.photo}" alt="foto" onclick="(function(){var w=window.open('about:blank');var img=new Image();img.src='${r.photo}';w.document.body.appendChild(img);})()">`:'';return `<tr><td>${r.dt||''}</td><td>${r.brand||''}</td><td>${r.model||''}</td><td>${r.sn||''}</td><td>${r.result||''}</td><td>${r.just||''}</td><td>${img}</td></tr>`;}).join('');}const b=document.getElementById('btnExportCSV');if(b)b.addEventListener('click',()=>{const d=JSON.parse(localStorage.getItem('hist_motor')||'[]');if(!d.length){alert('Sem registos para exportar.');return;}const headers=['Data/Hora','Marca','Modelo/Ref','Nº Série','Resultado','Justificação'];const rows=d.map(r=>[r.dt||'',r.brand||'',r.model||'',r.sn||'',r.result||'',(r.just||'').replace(/\s+/g,' ').trim()]);const all=[headers,...rows];const csv=all.map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='historico_motores.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);});})();
+document.addEventListener('DOMContentLoaded', () => {
+  const tbody = document.querySelector('#tabelaMotor tbody');
+  const btn = document.getElementById('exportMotorCsv');
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem('historico_motor') || '[]'); } catch { arr = []; }
+  arr.sort((a,b)=> (b.ts||'').localeCompare(a.ts||''));
+  tbody.innerHTML = arr.length ? arr.map(r => `
+    <tr>
+      <td>${new Date(r.ts).toLocaleString()}</td>
+      <td>${(r.marca||'').toUpperCase()}</td>
+      <td>${r.sn||''}</td>
+      <td>${r.resultado||''}</td>
+      <td>${r.motivo||''}</td>
+      <td>${r.foto?'<img src="'+r.foto+'" alt="foto" style="height:36px">':'—'}</td>
+    </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:#666">Sem registos ainda.</td></tr>`;
+  if(btn && typeof downloadCSV==='function'){
+    btn.addEventListener('click', ()=>{
+      const rows = [['Data','Marca','S/N','Resultado','Justificação']].concat(arr.map(r=>[
+        new Date(r.ts).toLocaleString(), (r.marca||'').toUpperCase(), r.sn||'', r.resultado||'', r.motivo||''
+      ]));
+      downloadCSV('historico_motor.csv', rows);
+    });
+  }
+});

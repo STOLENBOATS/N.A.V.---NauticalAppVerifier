@@ -1,139 +1,121 @@
-(function(){
-  if(!document.currentScript){ /* script running */ }
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('motorForm');
+  const marcaSel = document.getElementById('motorMarca');
+  const snInput = document.getElementById('motorSn');
+  const out = document.getElementById('motorResultado');
+  const interp = document.getElementById('motorInterpretacao');
+  const camposBox = document.getElementById('motorCampos');
+  if(!form || !marcaSel || !snInput || !out || !interp) return;
 
-  const brandSel = document.getElementById('brand');
-  const serial = document.getElementById('serial');
-  const brandFields = document.getElementById('brandFields');
-  const btnValidate = document.getElementById('btnValidarMotor');
-  const btnClear = document.getElementById('btnLimparMotor');
-  const status = document.getElementById('motorStatus');
-  const interpret = document.getElementById('motorInterpret');
-  const file = document.getElementById('motorPhoto');
+  if(camposBox){ marcaSel.addEventListener('change', () => renderCampos(marcaSel.value)); renderCampos(marcaSel.value); }
 
-  function show(el){ el.classList.remove('hidden'); }
-  function hide(el){ el.classList.add('hidden'); }
-  function setStatus(ok, text){
-    status.textContent = text;
-    status.className = 'notice ' + (ok ? 'success' : 'error');
-    show(status);
-  }
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const marca = (marcaSel.value||'').toLowerCase();
+    const sn = (snInput.value||'').toUpperCase().trim().replace(/\s+/g,' ');
+    if(!marca || !sn){ out.textContent='Selecione marca e introduza S/N.'; return; }
 
-  function renderBrandFields(brand){
-    brandFields.innerHTML='';
-    if(brand==='Yamaha'){
-      brandFields.innerHTML = `
-        <div>
-          <label>Código de Modelo <span class="lang">Model code</span></label>
-          <input id="yamModel" placeholder="Ex.: F350NSA">
-        </div>
-        <div>
-          <label>Código Interno <span class="lang">Internal code</span></label>
-          <input id="yamCode" placeholder="Ex.: 6ML">
-        </div>
-      `;
-    } else if(brand==='Honda'){
-      brandFields.innerHTML = `
-        <div>
-          <label>Modelo <span class="lang">Model</span></label>
-          <input id="honModel" placeholder="Ex.: BF150AK3">
-        </div>
-        <div>
-          <label>Prefixo <span class="lang">Prefix</span></label>
-          <input id="honPrefix" placeholder="Ex.: BAZS">
-        </div>
-      `;
-    }
-  }
-
-  brandSel.addEventListener('change', e=>{
-    renderBrandFields(brandSel.value);
+    const extra = lerCampos(marca);
+    const res = validarMotor(marca, sn, extra);
+    render(res);
+    guardarHistoricoMotor(res);
   });
 
-  function validateYamaha(sn, model, code){
-    // Very light heuristics: known pattern like 6ML-XXXXXXX and model letters/digits
-    const okSerial = /^[A-Z0-9]{2,4}-?\d{5,8}$/.test(sn.toUpperCase());
-    const okModel = /^[A-Z0-9]{3,10}$/.test((model||'').toUpperCase());
-    const okCode = /^[A-Z0-9]{2,4}$/.test((code||'').toUpperCase());
-    let reason = [];
-    if(!okSerial) reason.push('Número de série Yamaha fora do padrão expectável');
-    if(!okModel) reason.push('Código de modelo Yamaha não reconhecido');
-    if(!okCode) reason.push('Código interno Yamaha inválido');
-    const ok = okSerial && okModel && okCode;
-    return {ok, reason: reason.join('; ') || 'Estrutura coerente Yamaha'};
-  }
-
-  function validateHonda(sn, model, prefix){
-    const okSerial = /^[A-Z0-9-]{6,14}$/.test(sn.toUpperCase());
-    const okModel = /^[A-Z0-9]{3,12}$/.test((model||'').toUpperCase());
-    const okPrefix = /^[A-Z0-9]{2,6}$/.test((prefix||'').toUpperCase());
-    let reason = [];
-    if(!okSerial) reason.push('Número de série Honda fora do padrão expectável');
-    if(!okModel) reason.push('Modelo Honda inválido');
-    if(!okPrefix) reason.push('Prefixo Honda inválido');
-    const ok = okSerial && okModel && okPrefix;
-    return {ok, reason: reason.join('; ') || 'Estrutura coerente Honda'};
-  }
-
-  function renderInterpret(obj){
-    interpret.innerHTML = `
-      <h3>Interpretação / <span class="lang">Interpretation</span></h3>
-      <div class="kv">
-        <div><strong>Marca</strong><div class="small">Brand</div></div>
-        <div>${obj.brand}</div>
-
-        <div><strong>Número</strong><div class="small">Serial</div></div>
-        <div>${obj.serial}</div>
-
-        ${obj.model?`<div><strong>Modelo</strong><div class="small">Model</div></div><div>${obj.model}</div>`:''}
-        ${obj.extra?`<div><strong>Extra</strong><div class="small">Extra</div></div><div>${obj.extra}</div>`:''}
-      </div>
-    `;
-    show(interpret);
-  }
-
-  btnValidate.addEventListener('click', async ()=>{
-    hide(interpret);
-    const brand = brandSel.value;
-    const sn = (serial.value||'').trim();
-    const photo = await readFileAsDataURL(file.files[0]);
-
-    if(!brand){ setStatus(false,'Selecione a marca / Select brand'); return; }
-    if(!sn){ setStatus(false,'Indique o número de série'); return; }
-
-    let verdict = {ok:false, reason:'Em falta'};
-    let model='', extra='';
-
-    if(brand==='Yamaha'){
-      model = (document.getElementById('yamModel')?.value||'').trim();
-      extra = (document.getElementById('yamCode')?.value||'').trim();
-      verdict = validateYamaha(sn, model, extra);
-    } else if(brand==='Honda'){
-      model = (document.getElementById('honModel')?.value||'').trim();
-      extra = (document.getElementById('honPrefix')?.value||'').trim();
-      verdict = validateHonda(sn, model, extra);
-    }
-
-    if(!verdict.ok){
-      setStatus(false, 'INVÁLIDO: ' + verdict.reason);
+  function renderCampos(marca){
+    if(!camposBox) return;
+    const m = (marca||'').toLowerCase();
+    if(m==='yamaha'){
+      camposBox.innerHTML = `
+        <div class="form-inline" style="grid-template-columns:repeat(6,minmax(0,1fr));gap:8px">
+          <label><strong>Modelo</strong></label>
+          <input id="yam_modelo" placeholder="Ex.: F350NSA">
+          <label><strong>Código</strong></label>
+          <input id="yam_codigo" placeholder="Ex.: 6ML">
+          <label><strong>Letra/Mês</strong></label>
+          <input id="yam_letra" maxlength="1" placeholder="Ex.: N">
+          <label><strong>Série</strong></label>
+          <input id="yam_serie" placeholder="Ex.: 1005843">
+        </div>`;
+    } else if(m==='honda'){
+      camposBox.innerHTML = `
+        <div class="form-inline" style="grid-template-columns:repeat(6,minmax(0,1fr));gap:8px">
+          <label><strong>Model Code</strong></label>
+          <input id="hon_model" placeholder="Ex.: BF150A">
+          <label><strong>Frame/Prefixo</strong></label>
+          <input id="hon_prefix" placeholder="Ex.: BZB">
+          <label><strong>Série</strong></label>
+          <input id="hon_serial" placeholder="Ex.: 1234567">
+        </div>`;
     } else {
-      setStatus(true, 'VÁLIDO');
-      renderInterpret({brand, serial: sn, model, extra});
+      camposBox.innerHTML = '';
     }
+  }
 
-    const hist = JSON.parse(localStorage.getItem('motorHistory')||'[]');
-    hist.unshift({
-      date: nowStr(),
-      brand,
-      serial: sn,
-      result: verdict.ok ? 'Válido' : 'Inválido',
-      reason: verdict.reason,
-      photo
-    });
-    localStorage.setItem('motorHistory', JSON.stringify(hist));
-  });
+  function lerCampos(marca){
+    const m = (marca||'').toLowerCase();
+    if(m==='yamaha'){
+      return {
+        modelo: document.getElementById('yam_modelo')?.value?.trim().toUpperCase()||'',
+        codigo: document.getElementById('yam_codigo')?.value?.trim().toUpperCase()||'',
+        letra:  document.getElementById('yam_letra')?.value?.trim().toUpperCase()||'',
+        serie:  document.getElementById('yam_serie')?.value?.trim().toUpperCase()||'',
+      };
+    }
+    if(m==='honda'){
+      return {
+        model:  document.getElementById('hon_model')?.value?.trim().toUpperCase()||'',
+        prefix: document.getElementById('hon_prefix')?.value?.trim().toUpperCase()||'',
+        serial: document.getElementById('hon_serial')?.value?.trim().toUpperCase()||'',
+      };
+    }
+    return {};
+  }
 
-  btnClear.addEventListener('click', ()=>{
-    brandSel.value=''; serial.value=''; brandFields.innerHTML=''; hide(status); hide(interpret); file.value='';
-  });
+  function validarMotor(marca, sn, extra){
+    let valido=false, motivo='Estrutura básica não reconhecida.', interpret=[];
+    if(marca==='yamaha'){
+      const baseOk = /^[A-Z0-9\-\s]{6,24}$/.test(sn);
+      const camposOk = (!extra.modelo || /^[A-Z0-9\-]{3,10}$/.test(extra.modelo))
+                    && (!extra.codigo || /^[A-Z0-9]{2,6}$/.test(extra.codigo))
+                    && (!extra.letra  || /^[A-HJ-NPR-Z]$/.test(extra.letra))
+                    && (!extra.serie  || /^[0-9]{5,8}$/.test(extra.serie));
+      valido = baseOk && camposOk;
+      motivo = valido ? 'Formato Yamaha aceitável (base + campos).' : motivo;
+      interpret = [
+        ['Modelo', extra.modelo||'—', 'Ex.: F350NSA'],
+        ['Código', extra.codigo||'—', 'Ex.: 6ML (core plug/chapa)'],
+        ['Letra/Mês', extra.letra||'—', 'Sem I,O,Q (ex.: N)'],
+        ['Série', extra.serie||'—', 'Numérica 5–8 dígitos'],
+      ];
+    } else if(marca==='honda'){
+      const baseOk = /^[A-Z0-9\-]{7,20}$/.test(sn);
+      const camposOk = (!extra.model  || /^[A-Z0-9\-]{3,10}$/.test(extra.model))
+                    && (!extra.prefix || /^[A-Z0-9]{2,6}$/.test(extra.prefix))
+                    && (!extra.serial || /^[0-9]{5,8}$/.test(extra.serial));
+      valido = baseOk && camposOk;
+      motivo = valido ? 'Formato Honda aceitável (base + campos).' : motivo;
+      interpret = [
+        ['Model Code', extra.model||'—', 'Ex.: BF150A'],
+        ['Frame/Prefixo', extra.prefix||'—', 'Ex.: BZB'],
+        ['Série', extra.serial||'—', 'Numérica 5–8 dígitos'],
+      ];
+    }
+    return {marca, sn, valido, motivo, interpret, extra};
+  }
 
-})();
+  function render(res){
+    out.innerHTML = `<strong>${res.valido?'S/N VÁLIDO':'S/N INVÁLIDO'}</strong> — ${res.motivo}`;
+    const rows = (res.interpret||[]).map(([c,v,n])=>`<tr><td>${c}</td><td>${v}</td><td>${n}</td></tr>`).join('');
+    interp.innerHTML = rows
+      ? `<table class="interp"><thead><tr><th>Campo</th><th>Valor</th><th>Nota</th></tr></thead><tbody>${rows}</tbody></table>`
+      : `<p>Sem campos adicionais.</p>`;
+  }
+
+  function getHist(key){ try{ return JSON.parse(localStorage.getItem(key)||'[]'); } catch{ return []; } }
+  function setHist(key, arr){ localStorage.setItem(key, JSON.stringify(arr.slice(0,500))); }
+  function guardarHistoricoMotor(res){
+    const key='historico_motor'; const arr=getHist(key);
+    arr.unshift({ ts:new Date().toISOString(), marca:res.marca, sn:res.sn, resultado:res.valido?'Válido':'Inválido', motivo:res.motivo, foto:null });
+    setHist(key, arr);
+  }
+});

@@ -1,1 +1,23 @@
-(function(){const tb=document.querySelector('#tblWin tbody');const d=JSON.parse(localStorage.getItem('hist_win')||'[]');if(!d.length){tb.innerHTML='<tr><td colspan="4" class="helper">Sem registos. EN: No records.</td></tr>';}else{tb.innerHTML=d.map(r=>`<tr><td>${r.dt||''}</td><td>${r.win||''}</td><td>${r.result||''}</td><td>${r.just||''}</td></tr>`).join('');}const b=document.getElementById('btnExportCSV');if(b)b.addEventListener('click',()=>{const d=JSON.parse(localStorage.getItem('hist_win')||'[]');if(!d.length){alert('Sem registos para exportar.');return;}const headers=['Data/Hora','WIN','Resultado','Justificação'];const rows=d.map(r=>[r.dt||'',r.win||'',r.result||'',(r.just||'').replace(/\s+/g,' ').trim()]);const all=[headers,...rows];const csv=all.map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='historico_win.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);});})();
+document.addEventListener('DOMContentLoaded', () => {
+  const tbody = document.querySelector('#tabelaWin tbody');
+  const btn = document.getElementById('exportWinCsv');
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem('historico_win') || '[]'); } catch { arr = []; }
+  arr.sort((a,b)=> (b.ts||'').localeCompare(a.ts||''));
+  tbody.innerHTML = arr.length ? arr.map(r => `
+    <tr>
+      <td>${new Date(r.ts).toLocaleString()}</td>
+      <td>${r.win||''}</td>
+      <td>${r.resultado||''}</td>
+      <td>${r.motivo||''}</td>
+      <td>${r.foto?'<img src="'+r.foto+'" alt="foto" style="height:36px">':'—'}</td>
+    </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:#666">Sem registos ainda.</td></tr>`;
+  if(btn && typeof downloadCSV==='function'){
+    btn.addEventListener('click', ()=>{
+      const rows = [['Data','WIN','Resultado','Justificação']].concat(arr.map(r=>[
+        new Date(r.ts).toLocaleString(), r.win||'', r.resultado||'', r.motivo||''
+      ]));
+      downloadCSV('historico_win.csv', rows);
+    });
+  }
+});
